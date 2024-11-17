@@ -1,25 +1,74 @@
-import logo from './logo.svg';
-import './App.css';
+import { useState } from "react";
+import "./App.css";
 
-function App() {
+const App = () => {
+  const [inputText, setInputText] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const processText = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch("http://127.0.0.1:5000/process", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: inputText }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to process text");
+      }
+
+      setResult(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <div className="container">
+      <div className="card">
+        <h1 className="card-title">BERT Text Processing Workshop</h1>
+
+        <div className="input-area">
+          <textarea
+            className="textarea"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="Enter text to process..."
+          />
+        </div>
+
+        <button
+          className="button"
+          onClick={processText}
+          disabled={loading || !inputText.trim()}
         >
-          Learn React
-        </a>
-      </header>
+          {loading ? "Processing..." : "Process Text"}
+        </button>
+
+        {error && <div className="error">Error: {error}</div>}
+
+        {result && (
+          <div className="results">
+            <h3 className="results-title">Results:</h3>
+            <div className="results-content">
+              {JSON.stringify(result, null, 2)}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+};
 
 export default App;
